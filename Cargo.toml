@@ -1,0 +1,11 @@
+[package]
+name = "horizon-mod-burp"
+version = "1.0.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Horizon native mod: a rebindable key that burps, and a big burp a beat after finishing a meal."
+
+# The mod's logic and its tests: the same file the bundle adds to the game.
+[lib]
+path = "mixins/burp/runtime.rs"

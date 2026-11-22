@@ -1,0 +1,87 @@
+[mod]
+id = "burp"
+version = "1.0.0"
+priority = 100
+
+# The commit it was tested on. The eat hook patches the client's consume
+# finish (finish_consuming) and the rest uses the native hook points, so a
+# Horizon change to either needs a re-check.
+[compatibility]
+horizon_revision = "af55a734865da4f1b11836164a979ff06a1f0449"
+
+# The mod's state (on/off and the pending big burp) and the burp pitches,
+# with the tests.
+[[module]]
+id = "runtime"
+file = "crates/horizon-client/src/game.rs"
+name = "burp"
+source = "runtime.rs"
+
+# The burp key (B by default, rebindable in Options > Mods): plays a burp
+# with a random pitch.
+[[injection]]
+id = "key"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_key"
+helper = "key.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "key", ty = "&str", value = "key" },
+  { name = "pressed", ty = "bool", value = "pressed" },
+]
+
+# One game tick: fires the pending big burp when its time is up.
+[[injection]]
+id = "tick"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_tick"
+helper = "tick.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+]
+
+# The local player finished a consumable: food means a big burp is on the
+# way (vanilla's own small burp plays right after, inside the function).
+[[injection]]
+id = "eat"
+kind = "HEAD"
+target = "horizon_client::game::consume::Game<'_>::finish_consuming"
+helper = "eat.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "info", ty = "&horizon_client::items::ItemInfo", value = "info" },
+]
+
+# The mod's row in Options > Mods, with its key.
+[[injection]]
+id = "list"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_mods"
+helper = "list.rs"
+bindings = [
+  { name = "mods", ty = "&mut Vec<crate::game::native_hooks::NativeMod>", value = "&mut *mods" },
+]
+
+# The mod's settings page: the on/off toggle.
+[[injection]]
+id = "settings"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings"
+helper = "settings.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "buttons", ty = "&mut Vec<String>", value = "&mut *buttons" },
+]
+
+# A click on the mod's settings page: change the state and keep it.
+[[injection]]
+id = "click"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings_click"
+helper = "click.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "button", ty = "usize", value = "button" },
+]
