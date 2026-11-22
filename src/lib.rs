@@ -1,9 +1,9 @@
 // Burp Mod, a native mod: a rebindable key that burps on demand, and a big
-// burp a beat after finishing a meal. This file is both the mod's Cargo
-// library (its tests) and the module the bundle adds to the game.
+// burp a beat after finishing a meal. This file is the mod's Cargo library
+// (its tests) and the crate every helper reaches as `burp::`.
 //
-// Horizon runs two Games in single player (the window's and the single
-// player server's) and `native_tick` fires in both, so the pending big
+// Horizon runs two Games in single player (the window's client and the
+// integrated server's) and the tick fires in both, so the pending big
 // burp's countdown lives in a static the eat hook (which runs on the
 // server's Game, where the use completes) hands to the window's tick, the
 // only Game with the local player's position and audio.
@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 /// The mod's id (its settings folder and its keys' lines), name and version.
 pub const ID: &str = "burp";
 pub const NAME: &str = "Burp Mod";
-pub const VERSION: &str = "1.0.0";
+pub const VERSION: &str = "1.1.0";
 pub const DESCRIPTION: &str = "Burp on demand with a key you can rebind, and let out a big burp a \
 beat after finishing a meal. Vanilla's own small burp still plays — this is the big one on top.";
 
@@ -216,5 +216,31 @@ mod tests {
         assert_eq!(big_burp_pitch(0.0), 0.55);
         assert_eq!(big_burp_pitch(1.0), 0.75);
         assert!(big_burp_pitch(0.5) > 0.55 && big_burp_pitch(0.5) < 0.75);
+    }
+}
+
+/// The mod's registration handle: the game instantiates it for the settings
+/// page, the Controls entry and the dispatch registration.
+#[derive(Default)]
+pub struct Mod;
+
+/// The page's on/off toggle and the burp key the tick helper polls. The
+/// `client_tick_pre` impl is a no-op so the game always calls the
+/// `native_client_tick_pre` dispatch the tick mixin lives in: the game
+/// skips dispatches no mod listens to, and the mixin must run.
+#[mod_api::horizon_mod]
+impl mod_api::Hooks for Mod {
+    fn register(&self, registrar: &mut dyn mod_api::Registrar, _: &mod_api::RegistrationContext) {
+        use mod_api::{KeyConflictContext, KeyRegistration, SettingSpec};
+        let _ = registrar.register_setting(SettingSpec::toggle("on", "burp.setting.on", true));
+        registrar.register_key_mapping(
+            KeyRegistration::new(KEY, DEFAULT_KEY)
+                .label("burp.key.burp")
+                .category("burp.category")
+                .context(KeyConflictContext::InGame),
+        );
+    }
+
+    fn client_tick_pre(&self, _: &mut dyn mod_api::ClientHost, _: &mut mod_api::ClientTickPreEvent) {
     }
 }

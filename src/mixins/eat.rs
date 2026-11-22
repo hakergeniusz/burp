@@ -3,15 +3,14 @@
 // completes), so the schedule goes through the shared static and the
 // window's tick does the playing. Vanilla's own small burp plays right
 // after this hook, inside the function.
+// Copyright (c) 2026 hakergeniusz. MIT.
 fn burp_eaten(game: &mut crate::game::Game<'_>, info: &horizon_client::items::ItemInfo) {
-    use crate::game::burp as bp;
     // The same gate vanilla's burp uses: food only, no burp for potions.
     if info.food.is_none() {
         return;
     }
-    // Turned off in Options > Mods: nothing until the next build leaves it out.
-    if !game.native_on(bp::ID) {
-        return;
-    }
-    bp::schedule(&bp::PENDING, true);
+    let on = game
+        .stored_setting(burp::ID, "on")
+        .is_none_or(|v| v.trim() != "false");
+    burp::schedule(&burp::PENDING, on);
 }

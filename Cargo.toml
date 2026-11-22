@@ -1,11 +1,11 @@
 [package]
-name = "horizon-mod-burp"
-version = "1.0.0"
+name = "burp"
+version = "1.1.0"
 edition = "2024"
 license = "MIT"
 publish = false
 description = "Horizon native mod: a rebindable key that burps, and a big burp a beat after finishing a meal."
 
-# The mod's logic and its tests: the same file the bundle adds to the game.
-[lib]
-path = "mixins/burp/runtime.rs"
+[dependencies]
+# The pinned SDK's API crate; the launcher stages its own copy of the same build.
+horizon-mod-api = { path = ".horizon/sdk/api/crates/horizon-mod-api" }

@@ -1,0 +1,40 @@
+id = "burp"
+name = "Burp Mod"
+version = "1.1.0"
+description = "Burp on demand with a key you can rebind, and let out a big burp a beat after finishing a meal. Vanilla's own small burp still plays — this is the big one on top."
+authors = ["hakergeniusz"]
+license = "MIT"
+api = "0.2"
+side = "client"
+capabilities = ["registries"]
+
+[native]
+game = "26.3"
+horizon = "f037744a79f9982c47876f49c5a3067279f88706"
+mixins = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
+
+# One window tick: the burp key's registered mapping's click and the
+# pending big burp's countdown, both played on the window's Game (the one
+# with the local player's position and audio). The tick_pre hook itself is
+# implemented in src/lib.rs so this dispatch always runs.
+[[native.mixin]]
+id = "tick"
+target = "horizon_client::game::native_hooks::client_tick_pre::Game<'_>::native_client_tick_pre"
+kind = "HEAD"
+helper = "src/mixins/tick.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+]
+
+# The local player finished a consumable: when it had food, a big burp is
+# on the way (vanilla's own small burp plays right after, inside the
+# function).
+[[native.mixin]]
+id = "eat"
+target = "horizon_client::game::consume::Game<'_>::finish_consuming"
+kind = "HEAD"
+helper = "src/mixins/eat.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "info", ty = "&horizon_client::items::ItemInfo", value = "info" },
+]
